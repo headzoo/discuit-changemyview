@@ -35,7 +35,7 @@ export const createDiscuit = async (redis: Redis): Promise<Discuit> => {
   try {
     const discuit = new Discuit();
     discuit.logger = logger;
-    discuit.watchTimeout = 1000 * 60 * 10; // 10 minutes
+    discuit.watchTimeout = 1000 * 60 * 5; // 5 minutes
     discuit.seenChecker = new RedisSeenChecker(redis);
     const bot = await discuit.login(process.env.DISCUIT_USERNAME, process.env.DISCUIT_PASSWORD);
     if (!bot) {
