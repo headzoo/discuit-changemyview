@@ -1,6 +1,7 @@
 import { hostname } from 'os';
 import { Discuit, Comment } from '@headz/discuit';
 import { createRedis, Redis } from './redis';
+import { sequelize } from './sequelize';
 import { RedisSeenChecker } from './RedisSeenChecker';
 import { logger } from './logger';
 import { Award } from './modals';
@@ -14,6 +15,13 @@ const isCommentingDisabled = hostname() === 'sean-ubuntu';
  * ID of the change my view community.
  */
 const communityId = '177b549f4e8a6b2e36c80f82';
+
+/**
+ * The community description.
+ */
+const communityDescription = `A place to post opinions you want challenged.
+
+Any user (OP or not) should reply to comments with !delta when their view has been changed in order to give the other person a delta ∆ award. A scoreboard will be kept of users with the most deltas.`;
 
 /**
  * Delta symbol.
@@ -53,6 +61,30 @@ export const createDiscuit = async (redis: Redis): Promise<Discuit> => {
 };
 
 /**
+ * Generates the leaderboard.
+ */
+const generateLeaderboard = async (): Promise<string[]> => {
+  const awards = await Award.findAll({
+    attributes: ['awardeeUsername', [
+      sequelize.fn('COUNT', sequelize.col('awardeeUsername')), 'awards']
+    ],
+    group: ['awardeeUsername'],
+    order: [
+      [sequelize.fn('COUNT', sequelize.col('awardeeUsername')), 'DESC']
+    ],
+    limit: 10,
+  });
+
+  const leaderboard: string[] = [];
+  for (let i = 0; i < awards.length; i++) {
+    const award = awards[i];
+    leaderboard.push(`${i + 1}. @${(award as any).awardeeUsername} (${award.dataValues.awards} ${delta})`);
+  }
+
+  return leaderboard;
+}
+
+/**
  * Watches for new posts in the given communities.
  */
 export const runDiscuitWatch = async () => {
@@ -63,6 +95,24 @@ export const runDiscuitWatch = async () => {
   if (!process.env.DISCUIT_USERNAME) {
     logger.error('Missing DISCUIT_USERNAME');
     process.exit(1);
+  }
+
+  try {
+    const leaderboard = (await generateLeaderboard()).join('\n');
+    const about = `${communityDescription}\n\n**Leaderboard**\n${leaderboard}`;
+    console.log(`----\n${about}\n----`);
+    const c = await discuit.getCommunity(communityId);
+    if (!c) {
+      logger.error('Missing community.');
+      return;
+    }
+    /*await discuit.updateCommunity(communityId, {
+      ...c,
+      about,
+    });*/
+  } catch (error) {
+    // @ts-ignore
+    console.log(error.response);
   }
 
   discuit.watchComments([communityId], async (community: string, comment: Comment) => {
@@ -108,6 +158,20 @@ export const runDiscuitWatch = async () => {
         comment.id,
         'mods'
       );
+    }
+
+    try {
+      const leaderboard = (await generateLeaderboard()).join('\n');
+      const about = `${communityDescription}\n\n**Leaderboard**\n${leaderboard}`;
+      console.log(`----\n${about}\n----`);
+      const c = await discuit.getCommunity(communityId);
+      if (!c) {
+        logger.error('Missing community.');
+        return;
+      }
+    } catch (error) {
+      // @ts-ignore
+      console.log(error.response);
     }
   });
 };
