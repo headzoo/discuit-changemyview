@@ -1,12 +1,15 @@
 {% extends "../base.html.twig" %}
 {% block body %}
+  <h4>About</h4>
+  <textarea class="form-control w-100 mb-3" rows="10">{{ about }}</textarea>
+
   <table class="table table-striped">
     <thead>
       <tr>
         <th>User</th>
         <th>Post</th>
         <th>Created</th>
-        <th></th>
+        <th class="collapsed"></th>
       </tr>
     </thead>
     <tbody>
@@ -25,7 +28,7 @@
           <td>
             {{ award.createdAt|date("Y-m-d H:i:s") }}
           </td>
-          <td>
+          <td class="collapsed">
             <button
               data-id="{{ award.id }}"
               class="btn-delete btn btn-danger btn-sm d-flex align-items-center justify-content-center"

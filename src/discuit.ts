@@ -4,7 +4,7 @@ import { createRedis, Redis } from './redis';
 import { RedisSeenChecker } from './RedisSeenChecker';
 import { logger } from './logger';
 import { Award } from './modals';
-import { generateLeaderboard, containsDelta } from './utils';
+import { generateLeaderboard, containsDelta, communityDescription } from './utils';
 
 /**
  * Run the bot without posting comments. Primarily for testing.
@@ -15,13 +15,6 @@ const isCommentingDisabled = hostname() === 'sean-ubuntu';
  * ID of the change my view community.
  */
 const communityId = '177b549f4e8a6b2e36c80f82';
-
-/**
- * The community description.
- */
-const communityDescription = `A place to post opinions you want challenged.
-
-Any user (OP or not) should reply to comments with !delta when their view has been changed in order to give the other person a delta ∆ award. A leaderboard will be kept of users with the most deltas.`;
 
 /**
  * Creates a new Discuit instance and logs in the bot.
@@ -70,7 +63,7 @@ export const runDiscuitWatch = async () => {
   const displayLeaderboard = async () => {
     try {
       const leaderboard = (await generateLeaderboard()).join('\n');
-      const about = `${communityDescription}\n\n**Leaderboard**\n${leaderboard}`;
+      const about = communityDescription.replace('{{ leaderboard }}', leaderboard);
       console.log(`----\n${about}\n----`);
       /*const c = await discuit.getCommunity(communityId);
       if (!c) {

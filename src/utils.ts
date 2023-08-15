@@ -12,6 +12,20 @@ export const delta = '∆';
 export const deltaTrigger = '!delta';
 
 /**
+ * The community description.
+ */
+export const communityDescription = `A place to post opinions you want challenged.
+
+OP makes a post to have an opinion challenged, i.e. "Hot dogs taste better with ketchup." Everyone else tries to change OP's view.
+
+Any user (OP or not) should reply with a !delta when their view has been changed in order to give the other person a delta ∆ award. A leaderboard will be kept of users with the most deltas.
+
+**Leaderboard**
+{{ leaderboard }}
+
+Complete leaderboard at https://changemyview.org/`;
+
+/**
  * Generates the leaderboard.
  *
  * @param limit Max number of results.
