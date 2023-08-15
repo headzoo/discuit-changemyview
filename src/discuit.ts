@@ -98,14 +98,13 @@ export const runDiscuitWatch = async () => {
   }
 
   try {
-    const leaderboard = (await generateLeaderboard()).join('\n');
+    /*const leaderboard = (await generateLeaderboard()).join('\n');
     const about = `${communityDescription}\n\n**Leaderboard**\n${leaderboard}`;
-    console.log(`----\n${about}\n----`);
     const c = await discuit.getCommunity(communityId);
     if (!c) {
       logger.error('Missing community.');
       return;
-    }
+    }*/
     /*await discuit.updateCommunity(communityId, {
       ...c,
       about,
