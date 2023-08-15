@@ -61,7 +61,25 @@ app.get('/theshadows', auth, async (req: Request, res: Response) => {
     activeTab: 'home',
     awards,
   });
-})
+});
+
+/**
+ * Deletes an award.
+ */
+app.delete('/theshadows/awards/:id', auth, async (req: Request, res: Response) => {
+  const award = await Award.findOne({
+    where: {
+      id: req.params.id,
+    }
+  });
+  if (!award) {
+    return res.status(404).send('Not found');
+  }
+
+  await award.destroy();
+
+  return res.status(200).send('OK');
+});
 
 /**
  * Starts the admin web server.

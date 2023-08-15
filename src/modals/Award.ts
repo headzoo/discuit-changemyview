@@ -15,6 +15,9 @@ export const Award = sequelize.define(
     community: {
       type: DataTypes.STRING,
     },
+    postTitle: {
+      type: DataTypes.STRING,
+    },
     postId: {
       type: DataTypes.STRING,
     },

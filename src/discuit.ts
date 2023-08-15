@@ -118,6 +118,12 @@ export const runDiscuitWatch = async () => {
       return;
     }
 
+    const post = await discuit.getPost(comment.postPublicId);
+    if (!post) {
+      logger.error('Missing post.');
+      return;
+    }
+
     const award = await Award.findOne({
       where: {
         community,
@@ -133,6 +139,7 @@ export const runDiscuitWatch = async () => {
     logger.info(`Awarded https://discuit.net/${community}/post/${comment.postPublicId}/${comment.id}`);
     await Award.create({
       community,
+      postTitle: post.title,
       commentId: comment.id,
       postId: comment.postPublicId,
       awardeeUsername: parent.username,
