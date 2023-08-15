@@ -3,6 +3,7 @@ import basicAuth from 'express-basic-auth';
 import path from 'path';
 import { logger } from './logger';
 import { Award } from './modals';
+import { eventDispatcher } from './events';
 import { generateLeaderboard } from './utils';
 import { communityDescription } from './constants';
 import packageJson from '../package.json';
@@ -84,6 +85,15 @@ app.delete('/theshadows/awards/:id', auth, async (req: Request, res: Response) =
   await award.destroy();
 
   return res.status(200).send('OK');
+});
+
+/**
+ * Reloads the server.
+ */
+app.post('/theshadows/reload', auth, async (req: Request, res: Response) => {
+  eventDispatcher.trigger('reload');
+
+  return res.json('ok');
 });
 
 /**

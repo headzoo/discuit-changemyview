@@ -13,6 +13,9 @@
         <li class="nav-item me-3">
           <a class="nav-link text-light{% if activeTab == "home" %} active{% endif %}" href="/theshadows" style="font-size: 1.2rem">Awards</a>
         </li>
+        <li class="nav-item me-3">
+          <span class="nav-link nav-reload text-light" style="font-size: 1.2rem; cursor: pointer;">Reload</span>
+        </li>
       </ul>
 
       <div class="ms-auto text-light">
@@ -21,3 +24,15 @@
     </div>
   </div>
 </nav>
+<script>
+  document.querySelector(".nav-reload").addEventListener("click", () => {
+    if (confirm("Are you sure you want to reload?")) {
+      fetch('/theshadows/reload/', {
+        method: 'POST',
+      })
+        .then(() => {
+          alert('Reloaded');
+        });
+    }
+  });
+</script>

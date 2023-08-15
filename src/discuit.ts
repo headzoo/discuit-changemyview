@@ -3,6 +3,7 @@ import { createRedis, Redis } from './redis';
 import { RedisSeenChecker } from './RedisSeenChecker';
 import { logger } from './logger';
 import { Award } from './modals';
+import { eventDispatcher } from './events';
 import { generateLeaderboard, containsDelta } from './utils';
 import { communityId, communityDescription, isCommentingDisabled } from './constants';
 
@@ -66,81 +67,95 @@ export const runDiscuitWatch = async () => {
     }
   }
 
-  discuit.watchComments([communityId], async (community: string, comment: Comment) => {
-    if (comment.username === process.env.DISCUIT_USERNAME) {
-      logger.debug('Found comment from the bot.');
-      return;
-    }
-    if (!comment.parentId || !containsDelta(comment.body)) {
-      logger.debug(`No delta found ${comment.id}`);
-      return;
-    }
+  /**
+   * Watches for new comments.
+   */
+  const watch = async (): Promise<void> => {
+    discuit.watchComments([communityId], async (community: string, comment: Comment) => {
+      if (comment.username === process.env.DISCUIT_USERNAME) {
+        logger.debug('Found comment from the bot.');
+        return;
+      }
+      if (!comment.parentId || !containsDelta(comment.body)) {
+        logger.debug(`No delta found ${comment.id}`);
+        return;
+      }
 
-    if (comment.body.length < 50) {
+      if (comment.body.length < 50) {
+        if (!isCommentingDisabled) {
+          await discuit.postComment(
+            comment.postPublicId,
+            'Cannot give delta Δ because your comment is too short. Please provide a reason for awarding the delta Δ.',
+            comment.id,
+            'mods'
+          );
+        }
+        logger.debug(`Comment too short ${comment.id}`);
+        return;
+      }
+
+      const parent = await discuit.getComment(comment.parentId);
+      if (!parent) {
+        logger.error('Missing parent.');
+        return;
+      }
+      if (comment.username === parent.username) {
+        logger.debug('Found comment from the same user.');
+        return;
+      }
+
+      const post = await discuit.getPost(comment.postPublicId);
+      if (!post) {
+        logger.error('Missing post.');
+        return;
+      }
+
+      const award = await Award.findOne({
+        where: {
+          community,
+          awardeeUsername: parent.username,
+          postId: comment.postId,
+        }
+      });
+      if (award) {
+        logger.debug(`Already awarded @${comment.username}`);
+        return;
+      }
+
+      logger.info(`Awarded https://discuit.net/${community}/post/${comment.postPublicId}/${comment.id}`);
+      await Award.create({
+        community,
+        postTitle: post.title,
+        commentId: comment.id,
+        postId: comment.postPublicId,
+        awardeeUsername: parent.username,
+        awardeeCommentId: parent.id,
+      });
       if (!isCommentingDisabled) {
+        const total = await Award.count({
+          where: {
+            awardeeUsername: parent.username,
+          }
+        });
+
         await discuit.postComment(
           comment.postPublicId,
-          'Cannot give delta Δ because your comment is too short. Please provide a reason for awarding the delta Δ.',
+          `You awarded a delta ∆ to @${parent.username}. They now have ${total} delta ∆ award(s).`,
           comment.id,
           'mods'
         );
       }
-      logger.debug(`Comment too short ${comment.id}`);
-      return;
-    }
 
-    const parent = await discuit.getComment(comment.parentId);
-    if (!parent) {
-      logger.error('Missing parent.');
-      return;
-    }
-    if (comment.username === parent.username) {
-      logger.debug('Found comment from the same user.');
-      return;
-    }
-
-    const post = await discuit.getPost(comment.postPublicId);
-    if (!post) {
-      logger.error('Missing post.');
-      return;
-    }
-
-    const award = await Award.findOne({
-      where: {
-        community,
-        awardeeUsername: parent.username,
-        postId: comment.postId,
-      }
+      await displayLeaderboard();
     });
-    if (award) {
-      logger.debug(`Already awarded @${comment.username}`);
-      return;
-    }
+  };
 
-    logger.info(`Awarded https://discuit.net/${community}/post/${comment.postPublicId}/${comment.id}`);
-    await Award.create({
-      community,
-      postTitle: post.title,
-      commentId: comment.id,
-      postId: comment.postPublicId,
-      awardeeUsername: parent.username,
-      awardeeCommentId: parent.id,
-    });
-    if (!isCommentingDisabled) {
-      const total = await Award.count({
-        where: {
-          awardeeUsername: parent.username,
-        }
-      });
-
-      await discuit.postComment(
-        comment.postPublicId,
-        `You awarded a delta ∆ to @${parent.username}. They now have ${total} delta ∆ award(s).`,
-        comment.id,
-        'mods'
-      );
-    }
-
-    await displayLeaderboard();
+  // Listen for the admin site reloading the list of communities.
+  eventDispatcher.on('reload', async () => {
+    logger.debug('Reloading');
+    discuit.unwatchComments();
+    await watch();
   });
+
+  await watch();
 };
