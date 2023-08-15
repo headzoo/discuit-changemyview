@@ -127,7 +127,7 @@ export const runDiscuitWatch = async () => {
     const award = await Award.findOne({
       where: {
         community,
-        commentId: comment.id,
+        awardeeUsername: parent.username,
         postId: comment.postId,
       }
     });
