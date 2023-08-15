@@ -4,7 +4,7 @@
     <thead>
       <tr>
         <th>User</th>
-        <th>Link</th>
+        <th>Post</th>
         <th>Created</th>
         <th></th>
       </tr>
@@ -19,7 +19,7 @@
           </td>
           <td>
             <a href="https://discuit.net/{{ award.community }}/post/{{ award.postId }}/{{ award.awardeeCommentId }}" target="_blank" rel="noopener noreferrer">
-              https://discuit.net/{{ award.community }}/post/{{ award.postId }}/{{ award.awardeeCommentId }}
+              {{ award.postTitle|default(award.postId) }}
             </a>
           </td>
           <td>
