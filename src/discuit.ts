@@ -1,10 +1,10 @@
 import { hostname } from 'os';
 import { Discuit, Comment } from '@headz/discuit';
 import { createRedis, Redis } from './redis';
-import { sequelize } from './sequelize';
 import { RedisSeenChecker } from './RedisSeenChecker';
 import { logger } from './logger';
 import { Award } from './modals';
+import { deltaTrigger, delta, generateLeaderboard } from './utils';
 
 /**
  * Run the bot without posting comments. Primarily for testing.
@@ -22,16 +22,6 @@ const communityId = '177b549f4e8a6b2e36c80f82';
 const communityDescription = `A place to post opinions you want challenged.
 
 Any user (OP or not) should reply to comments with !delta when their view has been changed in order to give the other person a delta ∆ award. A leaderboard will be kept of users with the most deltas.`;
-
-/**
- * Delta symbol.
- */
-const delta = '∆';
-
-/**
- * String that triggers the bot.
- */
-const deltaTrigger = '!delta';
 
 /**
  * Creates a new Discuit instance and logs in the bot.
@@ -59,30 +49,6 @@ export const createDiscuit = async (redis: Redis): Promise<Discuit> => {
     process.exit(1);
   }
 };
-
-/**
- * Generates the leaderboard.
- */
-const generateLeaderboard = async (): Promise<string[]> => {
-  const awards = await Award.findAll({
-    attributes: ['awardeeUsername', [
-      sequelize.fn('COUNT', sequelize.col('awardeeUsername')), 'awards']
-    ],
-    group: ['awardeeUsername'],
-    order: [
-      [sequelize.fn('COUNT', sequelize.col('awardeeUsername')), 'DESC']
-    ],
-    limit: 10,
-  });
-
-  const leaderboard: string[] = [];
-  for (let i = 0; i < awards.length; i++) {
-    const award = awards[i];
-    leaderboard.push(`${i + 1}. @${(award as any).awardeeUsername} (${award.dataValues.awards} ${delta})`);
-  }
-
-  return leaderboard;
-}
 
 /**
  * Watches for new posts in the given communities.

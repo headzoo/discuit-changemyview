@@ -1,0 +1,15 @@
+{% extends "base.html.twig" %}
+{% block body %}
+<h4>Leaderboard</h4>
+<table class="table table-striped">
+    <tbody>
+        {% for leader in leaders %}
+        <tr>
+            <td>
+              {{ leader }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
