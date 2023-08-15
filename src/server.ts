@@ -3,7 +3,8 @@ import basicAuth from 'express-basic-auth';
 import path from 'path';
 import { logger } from './logger';
 import { Award } from './modals';
-import { generateLeaderboard, communityDescription } from './utils';
+import { generateLeaderboard } from './utils';
+import { communityDescription } from './constants';
 import packageJson from '../package.json';
 
 if (!process.env.DISCUIT_ADMIN_USERNAME || !process.env.DISCUIT_ADMIN_PASSWORD) {

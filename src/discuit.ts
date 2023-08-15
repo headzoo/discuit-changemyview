@@ -1,20 +1,10 @@
-import { hostname } from 'os';
 import { Discuit, Comment } from '@headz/discuit';
 import { createRedis, Redis } from './redis';
 import { RedisSeenChecker } from './RedisSeenChecker';
 import { logger } from './logger';
 import { Award } from './modals';
-import { generateLeaderboard, containsDelta, communityDescription } from './utils';
-
-/**
- * Run the bot without posting comments. Primarily for testing.
- */
-const isCommentingDisabled = hostname() === 'sean-ubuntu';
-
-/**
- * ID of the change my view community.
- */
-const communityId = '177b549f4e8a6b2e36c80f82';
+import { generateLeaderboard, containsDelta } from './utils';
+import { communityId, communityDescription, isCommentingDisabled } from './constants';
 
 /**
  * Creates a new Discuit instance and logs in the bot.
@@ -44,17 +34,17 @@ export const createDiscuit = async (redis: Redis): Promise<Discuit> => {
 };
 
 /**
- * Watches for new posts in the given communities.
+ * Watches for new comments in changemyview.
  */
 export const runDiscuitWatch = async () => {
-  const redis = await createRedis();
-  const discuit = await createDiscuit(redis);
-  await redis.incr('discuit-changemyview-run-count');
-
   if (!process.env.DISCUIT_USERNAME) {
     logger.error('Missing DISCUIT_USERNAME');
     process.exit(1);
   }
+
+  const redis = await createRedis();
+  const discuit = await createDiscuit(redis);
+  await redis.incr('discuit-changemyview-run-count');
 
   /**
    * Currently have to manually add the leaderboard to the community description because
@@ -75,8 +65,6 @@ export const runDiscuitWatch = async () => {
       console.log(error.response);
     }
   }
-
-  await displayLeaderboard();
 
   discuit.watchComments([communityId], async (community: string, comment: Comment) => {
     if (comment.username === process.env.DISCUIT_USERNAME) {
