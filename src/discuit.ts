@@ -21,7 +21,7 @@ const communityId = '177b549f4e8a6b2e36c80f82';
  */
 const communityDescription = `A place to post opinions you want challenged.
 
-Any user (OP or not) should reply to comments with !delta when their view has been changed in order to give the other person a delta ∆ award. A scoreboard will be kept of users with the most deltas.`;
+Any user (OP or not) should reply to comments with !delta when their view has been changed in order to give the other person a delta ∆ award. A leaderboard will be kept of users with the most deltas.`;
 
 /**
  * Delta symbol.
@@ -128,6 +128,10 @@ export const runDiscuitWatch = async () => {
     const parent = await discuit.getComment(comment.parentId);
     if (!parent) {
       logger.error('Missing parent.');
+      return;
+    }
+    if (comment.username === parent.username) {
+      logger.debug('Found comment from the same user.');
       return;
     }
 
