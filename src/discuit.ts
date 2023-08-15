@@ -4,7 +4,7 @@ import { createRedis, Redis } from './redis';
 import { RedisSeenChecker } from './RedisSeenChecker';
 import { logger } from './logger';
 import { Award } from './modals';
-import { deltaTrigger, delta, generateLeaderboard } from './utils';
+import { generateLeaderboard, containsDelta } from './utils';
 
 /**
  * Run the bot without posting comments. Primarily for testing.
@@ -63,30 +63,48 @@ export const runDiscuitWatch = async () => {
     process.exit(1);
   }
 
-  try {
-    /*const leaderboard = (await generateLeaderboard()).join('\n');
-    const about = `${communityDescription}\n\n**Leaderboard**\n${leaderboard}`;
-    const c = await discuit.getCommunity(communityId);
-    if (!c) {
-      logger.error('Missing community.');
-      return;
-    }*/
-    /*await discuit.updateCommunity(communityId, {
-      ...c,
-      about,
-    });*/
-  } catch (error) {
-    // @ts-ignore
-    console.log(error.response);
+  /**
+   * Currently have to manually add the leaderboard to the community description because
+   * the api endpoint isn't working. This displays the leaderboard, so I can copy & paste it.
+   */
+  const displayLeaderboard = async () => {
+    try {
+      const leaderboard = (await generateLeaderboard()).join('\n');
+      const about = `${communityDescription}\n\n**Leaderboard**\n${leaderboard}`;
+      console.log(`----\n${about}\n----`);
+      /*const c = await discuit.getCommunity(communityId);
+      if (!c) {
+        logger.error('Missing community.');
+        return;
+      }*/
+    } catch (error) {
+      // @ts-ignore
+      console.log(error.response);
+    }
   }
+
+  await displayLeaderboard();
 
   discuit.watchComments([communityId], async (community: string, comment: Comment) => {
     if (comment.username === process.env.DISCUIT_USERNAME) {
       logger.debug('Found comment from the bot.');
       return;
     }
-    if (!comment.parentId || (!comment.body.includes(deltaTrigger) && !comment.body.includes(delta))) {
-      logger.debug(`Skipping ${comment.id}`);
+    if (!comment.parentId || !containsDelta(comment.body)) {
+      logger.debug(`No delta found ${comment.id}`);
+      return;
+    }
+
+    if (comment.body.length < 50) {
+      if (!isCommentingDisabled) {
+        await discuit.postComment(
+          comment.postPublicId,
+          'Cannot give delta Δ because your comment is too short. Please provide a reason for awarding the delta Δ.',
+          comment.id,
+          'mods'
+        );
+      }
+      logger.debug(`Comment too short ${comment.id}`);
       return;
     }
 
@@ -112,7 +130,7 @@ export const runDiscuitWatch = async () => {
       return;
     }
 
-    logger.info(`Awarded ${comment.id}`);
+    logger.info(`Awarded https://discuit.net/${community}/post/${comment.postPublicId}/${comment.id}`);
     await Award.create({
       community,
       commentId: comment.id,
@@ -129,18 +147,6 @@ export const runDiscuitWatch = async () => {
       );
     }
 
-    try {
-      const leaderboard = (await generateLeaderboard()).join('\n');
-      const about = `${communityDescription}\n\n**Leaderboard**\n${leaderboard}`;
-      console.log(`----\n${about}\n----`);
-      const c = await discuit.getCommunity(communityId);
-      if (!c) {
-        logger.error('Missing community.');
-        return;
-      }
-    } catch (error) {
-      // @ts-ignore
-      console.log(error.response);
-    }
+    await displayLeaderboard();
   });
 };
