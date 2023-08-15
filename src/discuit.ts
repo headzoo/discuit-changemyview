@@ -139,9 +139,15 @@ export const runDiscuitWatch = async () => {
       awardeeCommentId: parent.id,
     });
     if (!isCommentingDisabled) {
+      const total = await Award.count({
+        where: {
+          awardeeUsername: parent.username,
+        }
+      });
+
       await discuit.postComment(
         comment.postPublicId,
-        `You awarded a delta ∆ to @${parent.username}.`,
+        `You awarded a delta ∆ to @${parent.username}. They now have ${total} delta ∆ award(s).`,
         comment.id,
         'mods'
       );
