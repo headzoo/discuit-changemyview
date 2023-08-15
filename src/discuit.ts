@@ -134,7 +134,7 @@ export const runDiscuitWatch = async () => {
     await Award.create({
       community,
       commentId: comment.id,
-      postId: comment.postId,
+      postId: comment.postPublicId,
       awardeeUsername: parent.username,
       awardeeCommentId: parent.id,
     });

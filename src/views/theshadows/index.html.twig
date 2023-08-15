@@ -1,0 +1,23 @@
+{% extends "../base.html.twig" %}
+{% block body %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Link</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for award in awards %}
+        <tr>
+          <td>{{ award.awardeeUsername }}</td>
+          <td>
+            <a href="https://discuit.net/{{ award.community }}/post/{{ award.postId }}/{{ award.commentId }}" target="_blank" rel="noopener noreferrer">
+              https://discuit.net/{{ award.community }}/post/{{ award.postId }}/{{ award.commentId }}
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

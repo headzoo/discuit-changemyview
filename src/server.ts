@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import basicAuth from 'express-basic-auth';
 import path from 'path';
 import { logger } from './logger';
+import { Award } from './modals';
 import { generateLeaderboard } from './utils';
 import packageJson from '../package.json';
 
@@ -45,13 +46,20 @@ app.get('/', async (req: Request, res: Response) => {
  * Admin page.
  */
 app.get('/theshadows', auth, async (req: Request, res: Response) => {
-  const leaders = await generateLeaderboard(500);
+  const rows = await Award.findAll({
+    order: [['createdAt', 'DESC']],
+    limit: 100,
+  });
+  const awards: any = [];
+  for (let i = 0; i < rows.length; i++) {
+    awards.push(rows[i].dataValues);
+  }
 
-  res.render('index.html.twig', {
+  res.render('theshadows/index.html.twig', {
     shadows: true,
     version: packageJson.version,
     activeTab: 'home',
-    leaders,
+    awards,
   });
 })
 
