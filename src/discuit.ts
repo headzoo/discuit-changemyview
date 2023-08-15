@@ -158,7 +158,7 @@ export const runDiscuitWatch = async () => {
     if (!isCommentingDisabled) {
       await discuit.postComment(
         comment.postPublicId,
-        `You awarded a ∆ to @${parent.username}.`,
+        `You awarded a delta ∆ to @${parent.username}.`,
         comment.id,
         'mods'
       );
