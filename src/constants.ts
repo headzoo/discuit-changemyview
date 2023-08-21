@@ -19,6 +19,8 @@ OP makes a post to have an opinion challenged, i.e. "Hot dogs taste better with 
 
 Any user (OP or not) should reply with a !delta when their view has been changed in order to give the other person a delta ∆ award. A leaderboard will be kept of users with the most deltas.
 
+Wiki https://discuit.wiki/changemyview/home
+
 **Leaderboard**
 {{ leaderboard }}
 
